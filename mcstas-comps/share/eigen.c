@@ -1,3 +1,6 @@
+#ifndef EIGEN_LIB
+#define EIGEN_LIB
+
 #include <stddef.h>
 #include <float.h>
 #include <math.h>
@@ -448,4 +451,4 @@ real_pair eigensystem_hermitian(const scalar *A,
 }
 
 
-
+#endif

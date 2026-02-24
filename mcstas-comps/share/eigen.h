@@ -1,3 +1,6 @@
+#ifndef EIGEN_LIB_H
+#define EIGEN_LIB_H
+
 #include <float.h>
 #include <complex.h>
 
@@ -85,3 +88,5 @@ real_pair eigvalsh2x2(real_t a, real_t b, real_t c, real_t d);
 real_pair eigensystem_hermitian(const scalar *A, const int n,
 				real_t *lambdas, scalar *Q);
 
+
+#endif
