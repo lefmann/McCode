@@ -31,8 +31,8 @@
 *******************************************************************************/
 DEFINE INSTRUMENT Test_Phonon_BvK_PG(E=4.5,Ef=25,Dlambda=0.05,h=0,l=3.5,dA3=90, Temp=2, width = 0.001, coll = 20, int phononmode=0,int E_steps_high=100, int E_steps_low=100, int Verbose=0, int DISP=0)
 
-SHELL " cc -c eigen.c "
-DEPENDENCY " eigen.o "
+//SHELL " cc -c eigen.c "
+//DEPENDENCY " eigen.o "
 
 DECLARE
 %{

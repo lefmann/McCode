@@ -75,8 +75,8 @@ OUTPUT PARAMETERS (q_x, q_y, q_z)
 
 SHARE
 %{
-//%include "eigen.h"
-//%include "eigen.c"
+%include "eigen.h"
+%include "eigen.c"
 #ifndef PHONON_SIMPLE
 #define PHONON_SIMPLE $Revision$   // KL comment 040125: what is this used for?
 #pragma acc routine
@@ -166,7 +166,6 @@ void bubblesort (int size , double* inputarray , int* index)
 #include <stdlib.h>
 #include <math.h>
 #include <complex.h>
-#include "eigen.h"
    
 extern FILE *matrix_test_file, *parms_test_file;
 extern int matrix_test_count;
