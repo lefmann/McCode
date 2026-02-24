@@ -73,8 +73,9 @@ focus_r=0,focus_xw=0,focus_yh=0,focus_aw=0,focus_ah=0,target_x=0, target_y=0, ta
 
 SHARE
 %{
-%include "eigen.h"
-%include "eigen.c"
+  // James Avery eigenvalue solver
+  %include "eigen"
+
 #ifndef PHONON_SIMPLE
 #define PHONON_SIMPLE $Revision$   // KL comment 040125: what is this used for?
 #pragma acc routine
