@@ -1,6 +1,13 @@
+/************************************************************
+ * McStas Eigensolver library                               *
+ * Contributed by James Emil Avery, 202x                    *
+ * Department of Computer Science, University of Copenhagen *
+ ************************************************************/
+
 #ifndef EIGEN_LIB_H
 #define EIGEN_LIB_H
 
+/* Original file "types.h": */
 #include <float.h>
 #include <complex.h>
 
@@ -51,6 +58,9 @@ typedef struct {
 
 typedef complex_t scalar;
 
+/* End of "types.h"         */
+/* ------------------------ */
+/* Original file "eigen.h": */
 
 void print_vector(const char *name, scalar *a, int l);
 void print_matrix(const char *name, scalar *A, int m, int n);
@@ -88,5 +98,5 @@ real_pair eigvalsh2x2(real_t a, real_t b, real_t c, real_t d);
 real_pair eigensystem_hermitian(const scalar *A, const int n,
 				real_t *lambdas, scalar *Q);
 
-
+/* End of eigen.h */
 #endif

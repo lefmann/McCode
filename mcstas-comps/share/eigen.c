@@ -1,3 +1,11 @@
+/************************************************************
+ * McStas Eigensolver library                               *
+ * Contributed by James Emil Avery, 202x                    *
+ * Department of Computer Science, University of Copenhagen *
+ ************************************************************/
+
+/* Original file "eigen.c": */
+
 #ifndef EIGEN_LIB
 #define EIGEN_LIB
 
@@ -13,7 +21,7 @@
 /* TODO: Tridiagonal input/outpout in (3,m) storage. */
 /* TODO: Symmetric tridiagonal input/outpout in (2,m) storage. */
 /* TODO: Add pivot to handle ill-conditioned matrices */
-//#include "eigen.h" 
+// #include "eigen.h" 
 
 #define G PRINTF_G
 #define ROWS 0
