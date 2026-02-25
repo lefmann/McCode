@@ -9,85 +9,54 @@
 
 /* Original file "types.h": */
 #include <float.h>
-#include <complex.h>
 
-#define FLOAT_TYPE float64
-
-#if   FLOAT_TYPE==float64
- #define real_t double
- #define machine_precision DBL_EPSILON
+// PW: Non-float64 logic suppressed.
+  #define real_t double
+  #define scalar cdouble
+  #define machine_precision DBL_EPSILON
  #define PRINTF_G "%g"
 
-#elif FLOAT_TYPE==float80
- #define real_t long double
- #define PRINTF_G "%Lg"
- #define creal(x) creall(x)
- #define cimag(x) cimagl(x)
-
- #define conj conjl
- #define sqrt sqrtl
- #define fabs fabsl
- #define machine_precision LDBL_EPSILON
-
-#elif FLOAT_TYPE==float32
- #define real_t float
- #define PRINTF_G "%g"
- #define creal(x) crealf(x)
- #define cimag(x) cimagf(x)
-
- #define conj conjf
- #define sqrt sqrtf
- #define fabs fabsf
- #define machine_precision FLT_EPSILON
-#endif
-
-#ifdef __cplusplus
- #include <complex>
- typedef std::complex<real_t> complex_t;
-#else
-typedef real_t complex complex_t;
-#endif
-
-
+#ifndef  _MSC_EXTENSIONS
 #define INLINE inline __attribute__((always_inline))
-
+#else
+#define INLINE inline
+#endif
 
 typedef struct {
   real_t value[2];
 } real_pair;
 
-typedef complex_t scalar;
 
 /* End of "types.h"         */
 /* ------------------------ */
 /* Original file "eigen.h": */
 
-void print_vector(const char *name, scalar *a, int l);
-void print_matrix(const char *name, scalar *A, int m, int n);
+void print_vector(const char *name, cdouble *a, int l);
+void print_matrix(const char *name, cdouble *A, int m, int n);
 
-real_t vector_norm(const scalar *x, int n);
-void   extract_region(scalar *S, int N,
+real_t vector_norm(const cdouble *x, int n);
+void   extract_region(cdouble *S, int N,
 		    int i0, int j0, int m, int n,
-		    scalar *D);
-real_t max_norm(complex_t *A, int m, int n);
-void identity_matrix(scalar *Q, int n);
-void real_identity_matrix(real_t *Q, int n);
-void matrix_inplace_multiply(scalar *A, const scalar *B, 
+		    cdouble *D);
+double max_norm(cdouble* A, int m, int n);
+void identity_matrix(cdouble *Q, int n);
+void real_identity_matrix(double *Q, int n);
+void matrix_inplace_multiply(cdouble *A, cdouble *B, 
 			     int m, int n, int q);
 
-void reflection_vector(/*in*/const scalar *a, const real_t anorm,
-		       /*out*/scalar *v, scalar *sigma, int n);
-void apply_reflection(/*in/out*/scalar *A, const scalar *v,
-		      int m, int n, scalar sigma, int transpose);
+void reflection_vector(/*in*/cdouble *a, double anorm,
+		       /*out*/cdouble *v, cdouble *sigma, int n);
+void apply_reflection(/*in/out*/cdouble *A, const cdouble *v,
+		      int m, int n, cdouble sigma, int transpose);
 
-void reflect_region(/*in/out*/scalar *A, int N,
+void reflect_region(/*in/out*/cdouble *A, int N,
 		    int i0, int j0, int m, int n,
-		    const scalar *v, scalar sigma, int cols);
+		    const cdouble *v, cdouble sigma, int cols);
 
-void apply_real_reflections(const real_t *V, const int n, real_t *Q, const int m);
+void apply_real_reflections(double *V, int n, double *Q, int m);
 
 
-void QHQ(/*in/out*/scalar *A, int n, scalar *Q);
+void QHQ(/*in/out*/cdouble *A, int n, cdouble *Q);
 void T_QTQ(const int n,
 	   const real_t *Din, const real_t *Lin,
 	   real_t *Dout, real_t *Lout, real_t *Vout,
@@ -95,8 +64,8 @@ void T_QTQ(const int n,
 
 real_pair eigvalsh2x2(real_t a, real_t b, real_t c, real_t d);
 
-real_pair eigensystem_hermitian(const scalar *A, const int n,
-				real_t *lambdas, scalar *Q);
+real_pair eigensystem_hermitian(const cdouble *A, int n,
+				real_t *lambdas, cdouble *Q);
 
 /* End of eigen.h */
 #endif

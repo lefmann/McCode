@@ -28,29 +28,29 @@
 #define COLS 1
 
 /* TOOD: Generic matrix functions to separate file */
-INLINE real_t vector_norm2(const scalar *x, int n){
+INLINE real_t vector_norm2(const cdouble*x, int n){
   real_t sum = 0;
-  for(int i=0;i<n;i++) sum += x[i]*conj(x[i]);
+  for(int i=0;i<n;i++) sum += cabs(cmul(x[i],conj(x[i])));
   return sum;
 }
 
-INLINE real_t vector_norm(const scalar *x, int n){
+INLINE real_t vector_norm(const cdouble *x, int n){
   return sqrt(vector_norm2(x,n));
 }
 
-INLINE void extract_region(scalar *S, int N,
+INLINE void extract_region(cdouble *S, int N,
 			   int i0, int j0, int m, int n,
-			   scalar *D)
+			   cdouble *D)
 {
   for(int i=0;i<m;i++)
     for(int j=0;j<n;j++)
       D[i*n+j] = S[(i+i0)*N+(j+j0)];
 }
 
-INLINE void identity_matrix(scalar *Q, int n)
+INLINE void identity_matrix(cdouble *Q, int n)
 {
-  memset(Q,0,n*n*sizeof(scalar));
-  for(int i=0;i<n;i++) Q[i*n+i] = 1;
+  memset(Q,0,n*n*sizeof(cdouble));
+  for(int i=0;i<n;i++) Q[i*n+i] = cplx(1,0);
 }
 
 INLINE void real_identity_matrix(real_t *Q, int n)
@@ -59,8 +59,8 @@ INLINE void real_identity_matrix(real_t *Q, int n)
   for(int i=0;i<n;i++) Q[i*n+i] = 1;
 }
 
-/* TODO: Make this work with both real and complex scalars (cabs should be replaced by a macro) */
-INLINE real_t max_norm(complex_t *A, int m, int n)
+/* TODO: Make this work with both real and complex cdoubles (cabs should be replaced by a macro) */
+INLINE real_t max_norm(cdouble *A, int m, int n)
 {
   real_t mx = 0;
   for(int i=0;i<m;i++){ 	
@@ -71,14 +71,13 @@ INLINE real_t max_norm(complex_t *A, int m, int n)
   return mx;  
 }
 
-
-INLINE void matrix_inplace_multiply(scalar *A, const scalar *B, int m, int n, int q)
+INLINE void matrix_inplace_multiply(cdouble *A, cdouble *B, int m, int n, int q)
 {
   for(int i=0;i<m;i++){
-    scalar row[q];
+    cdouble* row=malloc(q*sizeof(cdouble));
     for(int j=0;j<q;j++){
-      scalar sum = 0;
-      for(int k=0;k<n;k++) sum += A[i*n+k]*B[k*q+j];
+      cdouble sum = cplx(0,0);
+      for(int k=0;k<n;k++) sum = cadd(sum,cmul(A[i*n+k],B[k*q+j]));
       row[j] = sum;
     }
     for(int j=0;j<q;j++) A[i*n+j] = row[j];
@@ -87,31 +86,31 @@ INLINE void matrix_inplace_multiply(scalar *A, const scalar *B, int m, int n, in
 
 
 /* TODO: Document */
-INLINE void apply_reflection(/*in/out*/scalar *A, const scalar *v, int m, int n, scalar sigma, int transpose)
+INLINE void apply_reflection(/*in/out*/cdouble* A, const cdouble *v, int m, int n, cdouble sigma, int transpose)
 {
-  scalar vHA[n];
-  scalar conj_sigma = conj(sigma);
+  cdouble* vHA=malloc(n*sizeof(cdouble));
+  cdouble conj_sigma = conj(sigma);
   int stride[2] = {n*(!transpose) + 1*transpose, n*transpose + 1*(!transpose)};
   
   for(int j=0;j<n;j++){		
-    scalar sum = 0;
-    for(int k=0;k<m;k++) sum += conj(v[k])*A[k*stride[0]+j*stride[1]];
+    cdouble sum = cplx(0,0);
+    for(int k=0;k<m;k++) sum = cadd(sum,cmul(conj(v[k]),A[k*stride[0]+j*stride[1]]));
     vHA[j] = sum;
   }
 
   for(size_t i=0;i<m;i++)       /* A += -2*outer(v,vTA) */
     for(size_t j=0;j<n;j++){
-      A[i*stride[0]+j*stride[1]] -= conj_sigma*v[i]*vHA[j]; 
+      A[i*stride[0]+j*stride[1]] = csub(A[i*stride[0]+j*stride[1]],cmul(cmul(conj_sigma,v[i]),vHA[j])); 
     }  
 }
 
 /* A: NxN
    Transform mxn region starting at (i0,j0)
  */
-INLINE void reflect_region(/*in/out*/scalar *A, int N, int i0, int j0, int m, int n, const scalar *v, scalar sigma, int cols)
+INLINE void reflect_region(/*in/out*/cdouble* A, int N, int i0, int j0, int m, int n, const cdouble *v, cdouble sigma, int cols)
 {
-  scalar vHA[n];
-  scalar conj_sigma = conj(sigma);
+  cdouble* vHA=malloc(n*sizeof(cdouble));
+  cdouble conj_sigma = conj(sigma);
   int stride[2] = {N*(!cols) + 1*cols, N*cols + 1*(!cols)};
 
   /* printf("reflect_region(A,%d,\n"
@@ -120,10 +119,10 @@ INLINE void reflect_region(/*in/out*/scalar *A, int N, int i0, int j0, int m, in
   printf("stride = [%d,%d]\n",stride[0],stride[1]);
    */
   for(int j=0;j<n;j++){		
-    scalar sum = 0;
+    cdouble sum = cplx(0,0);
     for(int i=0;i<m;i++){
       size_t IJ = (i+i0)*stride[0] + (j+j0)*stride[1];
-      sum += conj(v[i])*A[IJ];
+      sum = cadd(sum,cmul(conj(v[i]),A[IJ]));
     }
     vHA[j] = sum;
   }
@@ -131,22 +130,22 @@ INLINE void reflect_region(/*in/out*/scalar *A, int N, int i0, int j0, int m, in
   for(size_t i=0;i<m;i++)       /* A += -2*outer(v,vTA) */
     for(size_t j=0;j<n;j++){
       size_t IJ = (i+i0)*stride[0] + (j+j0)*stride[1];
-      A[IJ] -= conj_sigma*v[i]*vHA[j]; 
+      A[IJ] = csub(A[IJ],cmul(conj_sigma,cmul(v[i],vHA[j]))); 
     }  
 }
 
 /* Apply n 2D reflections to an mxm matrix Q */
 /* TODO: Transform rows instead (after this works) */
 /* TODO: Since we no longer have views, pass view as function parameter */
-void apply_real_reflections(const real_t *V, const int n, real_t *Q, const int m)
+void apply_real_reflections(real_t* V, int n, real_t* Q, int m)
 {
   if(Q != 0){       // Do we want eigenvectors?
     for(int k=0;k<n;k++){
-      const real_t v0 = V[2*k], v1 = V[2*k+1];      
+      real_t v0 = V[2*k], v1 = V[2*k+1];      
       // Udrullet:
       //       apply_reflection(Q({k,k+2},{0,m}), v);
       for(int l=0;l<m;l++){
-	real_t q0 = Q[k*m+l], q1 = Q[(k+1)*m+l]; /* scalar *q = &Q[l*m+k] */
+	real_t q0 = Q[k*m+l], q1 = Q[(k+1)*m+l]; /* cdouble *q = &Q[l*m+k] */
 	real_t vTA = q0*v0 + q1*v1;
 	Q[k*m+l]     -= 2*v0*vTA;
 	Q[(k+1)*m+l] -= 2*v1*vTA;
@@ -155,14 +154,14 @@ void apply_real_reflections(const real_t *V, const int n, real_t *Q, const int m
   }  
 }
 
-/* INLINE double COPYSIGN(double to, double from) */
+/* INLINE real_t COPYSIGN(real_t to, real_t from) */
 /* { */
 /*   if(fabs(from/to)<1e-14) return to; */
 /*   else return copysign(to,from); */
 /* } */
 
-INLINE void reflection_vector(/*in*/const scalar *a, const real_t anorm,
-			      /*out*/scalar *v, scalar *sigma, int n)
+INLINE void reflection_vector(/*in*/cdouble* a, const real_t anorm,
+			      /*out*/cdouble* v, cdouble* sigma, int n)
 { // Reflection vector that eliminates *row* a (as opposed to *column*)
 
   for(int i=0;i<n;i++) v[i] = a[i];
@@ -173,13 +172,13 @@ INLINE void reflection_vector(/*in*/const scalar *a, const real_t anorm,
   // in the complex case, it produces a real symmetric tridiagonal matrix.
   
   // Using the nomenclature from [LAWN72], Pages 4-5 and setting xi_i = a[i-1]:
-  scalar x1 = a[0];
-  double nu = copysign(anorm,creal(x1)); 
-  scalar norm_inv = 1.0/(x1+nu);
-  *sigma = (x1+nu)/nu;
-  v[0] += nu;
+  cdouble x1 = a[0];
+  real_t nu = copysign(anorm,creal(x1)); 
+  cdouble norm_inv = cdiv(cplx(1.0,0),radd(nu,x1));
+  *sigma = rmul(1/nu,radd(nu,x1));
+  v[0] = radd(nu,v[0]);
   
-  for(size_t i=0;i<n;i++) v[i] *= norm_inv;
+  for(size_t i=0;i<n;i++) v[i] = cmul(v[i],norm_inv);
 }
 
 
@@ -187,12 +186,12 @@ INLINE void reflection_vector(/*in*/const scalar *a, const real_t anorm,
 // Decompose a matrix (complex or real) into A = Q H Q.H(), where H is upper Hessenberg.
 // If A is Hermitian (symmetric in real case), then H is tridiagonal.
 // TODO: Row pivot
-void print_vector(const char *name, scalar *a, int l)
+void print_vector(const char* name, cdouble* a, int l)
 {
   printf("%s = array([",name); for(int i=0;i<l;i++) printf("%.3g + %.3gj%s",creal(a[i]), cimag(a[i]), i+1<l?", ":"])\n");
 }
 
-void print_matrix(const char *name, scalar *A, int m, int n)
+void print_matrix(const char *name, cdouble *A, int m, int n)
 {
   printf("%s = array([\n",name);
   for(int i=0;i<m;i++){
@@ -204,10 +203,12 @@ void print_matrix(const char *name, scalar *A, int m, int n)
 }
 
 /* TODO: Kan jeg håndtere a[0] =~= 0 mere robust? Kan jeg inkludere pivots? */
-void QHQ(/*in/out*/scalar *A, int n, scalar *Q)
+void QHQ(/*in/out*/cdouble* A, int n, cdouble* Q)
 {
-  scalar  sigma;	        // Elementary operation scale (2 for reflection)
-  scalar  v[n], vc[n], a[n];    // Reflection vector
+  cdouble  sigma;	        // Elementary operation scale (2 for reflection)
+  cdouble* v=malloc(n*sizeof(cdouble));
+  cdouble* vc=malloc(n*sizeof(cdouble));
+  cdouble* a=malloc(n*sizeof(cdouble));    // Reflection vector
 
   real_t numerical_zero = max_norm(A,n,n)*10*machine_precision;
   
@@ -229,6 +230,7 @@ void QHQ(/*in/out*/scalar *A, int n, scalar *Q)
 
     if(Q != 0) reflect_region(Q,n, k+1,0, l,n, v, sigma, ROWS); 
   }
+  free(v);free(vc);free(a);
 }
 
 // TODO: T_QTQ based on Givens rotations (should be possible to do with fewer operations)
@@ -243,7 +245,10 @@ void T_QTQ(const int n, const real_t *Din, const real_t *Lin, real_t *Dout, real
   //  numerical_zero = 10*max_norm*machine_precision;//TODO: max_norm for symmetric tridiagonal
   numerical_zero = 100*machine_precision;
   
-  real_t a[2], v[2], D[n+1], L[n+1], U[2*(n+1)];
+  real_t a[2], v[2];
+  real_t *D=malloc((n+1)*sizeof(real_t));
+  real_t *L=malloc((n+1)*sizeof(real_t));
+  real_t *U=malloc((2*(n+1))*sizeof(real_t));
 
   for(int i=0;i<n+1;i++){
     D[i] = Din[i]-shift;		// Diagonal
@@ -326,6 +331,7 @@ void T_QTQ(const int n, const real_t *Din, const real_t *Lin, real_t *Dout, real
       Lout[i] = U[i];  // First lower subdiagonal. L[k] = T(k+1,k) is element below kth diagonal element.
     }
   }
+  free(D); free(L); free(U);
 }
 
 
@@ -341,7 +347,7 @@ INLINE real_pair eigvalsh2x2(real_t a, real_t b, real_t c, real_t d){
 
 
 int    nth_time = 0;
-double eigensystem_cputime = 0;
+real_t eigensystem_cputime = 0;
 #define gershgorin_tolerance 1e4*machine_precision
 #define max_iterations       30
 
@@ -349,13 +355,14 @@ double eigensystem_cputime = 0;
 // TODO: Assumes all different eigenvalues. Does this break with multiples?
 // TODO: Stop after max_steps for fixed k. Return max Gershgorin radius as convergence -- or max Rayleigh quotient residual?
 // TODO: Implement implicit QR iteration using Francis' Q theorem/bulge chasing
-real_pair eigensystem_hermitian(const scalar *A,
+real_pair eigensystem_hermitian(const cdouble *A,
 				const int n,
-				real_t *lambdas, scalar *Q)
+				real_t *lambdas, cdouble* Q)
 {
-  scalar T[n*n];	         /* T: Tridiagonal transform, dense representation */
-  real_t V[2*(n-1)], Qhat[n*n];	 /* V: Reflection vectors, Qhat: Inner transform */
-  memcpy(T, A, n*n*sizeof(scalar));
+  cdouble *T=malloc(n*n*sizeof(cdouble));	         /* T: Tridiagonal transform, dense representation */
+  real_t *V=malloc((2*(n-1))*sizeof(real_t));
+  real_t *Qhat=malloc(n*n*sizeof(real_t));	 /* V: Reflection vectors, Qhat: Inner transform */
+  memcpy(T, A, n*n*sizeof(cdouble));
 
   real_t max_error    = gershgorin_tolerance;
   size_t n_iterations = 0;
@@ -374,7 +381,8 @@ real_pair eigensystem_hermitian(const scalar *A,
   QHQ(T,n,Q);
 
   /* Copy diagonal + first off-diagonal from dense T. */
-  real_t D[n], L[n];
+  real_t *D=malloc(n*sizeof(real_t));
+  real_t *L=malloc(n*sizeof(real_t));
   for(int i=0;i<n;i++){
     D[i] = creal(T[i*n+i]);
     L[i] = (i+1<n)? creal(T[i*n+i+1]) : 0;
@@ -434,27 +442,29 @@ real_pair eigensystem_hermitian(const scalar *A,
   for(int k=0;k<n;k++) lambdas[k] = D[k];
 
   if(Q != 0){
-    scalar Q_tmp[n*n];
+    cdouble *Q_tmp=malloc(n*n*sizeof(cdouble));
     for(int i=0;i<n;i++){
-      scalar col[n];
+      cdouble *col=malloc(n*sizeof(cdouble));
       for(int j=0;j<n;j++){
-	scalar sum = 0;
-	for(int k=0;k<n;k++) sum += Qhat[i*n+k]*Q[k*n+j];
+	cdouble sum = cplx(0,0);
+	for(int k=0;k<n;k++) sum = cadd(sum,rmul(Qhat[i*n+k],Q[k*n+j]));
 	col[j] = sum;
       }
       for(int j=0;j<n;j++) Q_tmp[i*n+j] = col[j];
     }
-    memcpy(Q,Q_tmp,n*n*sizeof(scalar));
+    memcpy(Q,Q_tmp,n*n*sizeof(cdouble));
   }
 
 #if TIME_EIGENSYSTEMS
   clock_t end_time = clock();
-  eigensystem_cputime += (end_time-start_time)/(double)CLOCKS_PER_SEC;
+  eigensystem_cputime += (end_time-start_time)/(real_t)CLOCKS_PER_SEC;
 #endif
   
   real_pair result;
   result.value[0] = max_error;
   result.value[1] = n_iterations;
+  
+  free(T); free(V); free(Qhat); free(D); free(L);
   return result;
 }
 
