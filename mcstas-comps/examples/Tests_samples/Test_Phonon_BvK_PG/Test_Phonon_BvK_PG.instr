@@ -13,7 +13,7 @@
 * %D
 * Simple TAS to test the Phonon_BvK_PG component
 *
-* Example: <parameters=values>
+* %Example: -y Detector: e_mon_beforeana_zoom_I=6.90143e-16
 *
 * %P
 * E:       [meV] Energy transfer
