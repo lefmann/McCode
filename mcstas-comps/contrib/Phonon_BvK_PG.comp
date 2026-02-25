@@ -74,6 +74,7 @@ NOACC
 
 SHARE
 %{
+  %include "mccode-complex-lib"
   // James Avery eigenvalue solver
   %include "eigen"
 
